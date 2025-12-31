@@ -1,6 +1,6 @@
 image:
   repository: emdon2106/diplom-django  # твой Docker Hub / YCR
-  tag: "latest"
+  tag: "v2.0"
   pullPolicy: Always
 
 replicaCount: 2
