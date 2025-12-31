@@ -15,7 +15,7 @@ RUN pip install -r /requirements.txt
 
 # Remove dependencies
 RUN apk del .tmp-build-deps
-re
+
 RUN mkdir /app
 WORKDIR /app
 COPY ./app /app
@@ -24,3 +24,7 @@ COPY ./app /app
 RUN adduser -D user
 
 USER user
+
+EXPOSE 8000
+
+CMD ["gunicorn", "app.wsgi:application", "--bind", "0.0.0.0:8000"]
