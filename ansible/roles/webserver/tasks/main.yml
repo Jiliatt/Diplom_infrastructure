@@ -1,0 +1,15 @@
+---
+- name: Install dependencies for Jenkins/Monitoring
+  apt:
+    name:
+      - openjdk-17-jre-headless
+      - nginx
+    state: present
+    update_cache: yes
+
+- name: Create Jenkins user
+  user:
+    name: jenkins
+    groups: jenkins
+    shell: /bin/bash
+  ignore_errors: yes

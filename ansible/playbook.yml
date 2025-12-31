@@ -1,39 +1,58 @@
 ---
-- name: MicroK8s Cluster (Shell method)
-  hosts: all
+- name: Setup all nodes
+  hosts: all  # ← РАБОТАЕТ! 3 хоста
   become: yes
   tasks:
-    - name: Install snapd
+    - name: Install dependencies
       apt:
-        name: snapd
+        name:
+          - snapd
+          - openjdk-17-jre-headless
+          - nginx
         state: present
         update_cache: yes
 
-    - name: Install MicroK8s via shell
-      shell: snap install microk8s --classic --channel=1.28
-      args:
-        creates: /snap/bin/microk8s
-
-    - name: Wait for MicroK8s ready
-      shell: microk8s status --wait-ready
-      retries: 10
-      delay: 10
-
-- name: Setup Master
-  hosts: k8s_master
+- name: Setup Master (k8s-master ONLY)
+  hosts: k8s-master  # ← ТОЧНЫЙ ХОСТ!
   become: yes
   tasks:
-    - name: Enable MicroK8s DNS
-      shell: microk8s enable dns
+    - name: Enable MicroK8s addons
+      shell: microk8s enable dns helm3 storage registry || true
 
-    - name: Get join token
-      shell: microk8s add-node --worker | grep "microk8s join" | head -1
-      register: join_token
+    - name: Deploy ArgoCD
+      shell: |
+        microk8s kubectl create ns argocd || true
+        microk8s helm repo add argo https://argoproj.github.io/argo-helm || true
+        microk8s helm repo update
+        microk8s helm install argocd argo/argo-cd --namespace argocd || true
 
-    - name: Debug join token
-      debug:
-        msg: "Join token: {{ hostvars['k8s_master']['join_token']['stdout'] | default('EMPTY') }}"
+    - name: Get ArgoCD password
+      shell: microk8s kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+      register: argocd_pass
 
-    - name: Join cluster (with fallback)
-      shell: microk8s join {{ hostvars['k8s_master']['join_token']['stdout'] }}
-      when: hostvars['k8s_master']['join_token']['stdout'] is defined and hostvars['k8s_master']['join_token']['stdout'] != ""
+    - name: Save credentials
+      copy:
+        content: |
+          ArgoCD UI: microk8s kubectl port-forward svc/argocd-server -n argocd 8080:443
+          Username: admin
+          Password: {{ argocd_pass.stdout }}
+        dest: /home/ubuntu/ARGOCD-CREDENTIALS.txt
+
+- name: Setup Worker (k8s-worker ONLY)
+  hosts: k8s-worker  # ← ТОЧНЫЙ ХОСТ!
+  become: yes
+  tasks:
+    - name: Add to microk8s group
+      user:
+        name: ubuntu
+        groups: microk8s
+        append: yes
+
+- name: Setup Jenkins (jenkins-node ONLY)
+  hosts: jenkins-node  # ← ТОЧНЫЙ ХОСТ!
+  become: yes
+  tasks:
+    - name: Install Jenkins deps
+      apt:
+        name: openjdk-17-jdk
+        state: present

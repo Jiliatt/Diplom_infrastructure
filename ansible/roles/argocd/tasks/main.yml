@@ -1,0 +1,37 @@
+---
+- name: Enable Helm3 addon
+  shell: microk8s enable helm3
+  ignore_errors: yes
+
+- name: Create argocd namespace
+  shell: microk8s kubectl create namespace argocd || true
+
+- name: Add ArgoCD Helm repo
+  shell: |
+    microk8s helm repo add argo https://argoproj.github.io/argo-helm || true
+    microk8s helm repo update
+  ignore_errors: yes
+
+- name: Install ArgoCD
+  shell: microk8s helm install argocd argo/argo-cd --namespace argocd
+
+- name: Get ArgoCD admin password
+  shell: microk8s kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+  register: argocd_password
+
+- name: Create ArgoCD app for diplom
+  template:
+    src: argocd-app.yaml.j2
+    dest: /tmp/argocd-app.yaml
+
+- name: Apply ArgoCD Application
+  shell: microk8s kubectl apply -f /tmp/argocd-app.yaml
+
+- name: Save ArgoCD credentials
+  copy:
+    content: |
+      ArgoCD URL: localhost:8080 (port-forward svc/argocd-server -n argocd 8080:443)
+      Username: admin
+      Password: {{ argocd_password.stdout }}
+    dest: /home/ubuntu/ARGOCD-CREDENTIALS.txt
+
