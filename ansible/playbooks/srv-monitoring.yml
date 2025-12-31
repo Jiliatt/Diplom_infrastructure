@@ -1,0 +1,8 @@
+---
+- name: Настроить srv-monitoring
+  hosts: monitoring
+  become: yes
+  roles:
+    - common
+    - monitoring
+

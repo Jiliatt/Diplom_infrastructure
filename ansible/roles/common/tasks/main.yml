@@ -1,0 +1,13 @@
+---
+- name: Обновить систему
+  apt:
+    update_cache: yes
+
+- name: Установить базовые пакеты
+  apt:
+    name:
+      - curl
+      - wget
+      - htop
+    state: present
+

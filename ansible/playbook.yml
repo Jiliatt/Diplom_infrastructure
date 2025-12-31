@@ -1,0 +1,39 @@
+---
+- name: MicroK8s Cluster (Shell method)
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install snapd
+      apt:
+        name: snapd
+        state: present
+        update_cache: yes
+
+    - name: Install MicroK8s via shell
+      shell: snap install microk8s --classic --channel=1.28
+      args:
+        creates: /snap/bin/microk8s
+
+    - name: Wait for MicroK8s ready
+      shell: microk8s status --wait-ready
+      retries: 10
+      delay: 10
+
+- name: Setup Master
+  hosts: k8s_master
+  become: yes
+  tasks:
+    - name: Enable MicroK8s DNS
+      shell: microk8s enable dns
+
+    - name: Get join token
+      shell: microk8s add-node --worker | grep "microk8s join" | head -1
+      register: join_token
+
+    - name: Debug join token
+      debug:
+        msg: "Join token: {{ hostvars['k8s_master']['join_token']['stdout'] | default('EMPTY') }}"
+
+    - name: Join cluster (with fallback)
+      shell: microk8s join {{ hostvars['k8s_master']['join_token']['stdout'] }}
+      when: hostvars['k8s_master']['join_token']['stdout'] is defined and hostvars['k8s_master']['join_token']['stdout'] != ""

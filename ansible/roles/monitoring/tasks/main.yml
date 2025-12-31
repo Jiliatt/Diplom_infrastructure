@@ -1,0 +1,53 @@
+---
+#Jenkins + мониторинг
+- name: Установить Docker
+  apt:
+    name: docker.io
+    state: present
+
+- name: Добавить пользователя в группу docker
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes
+
+- name: Скачать Docker Compose
+  get_url:
+    url: https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+
+- name: Создать директорию мониторинга
+  file:
+    path: /opt/monitoring
+    state: directory
+
+- name: Создать docker-compose.yml
+  copy:
+    content: |
+      version: '3.8'
+      services:
+        jenkins:
+          image: jenkins/jenkins:lts
+          ports:
+            - "8080:8080"
+            - "50000:50000"
+          volumes:
+            - jenkins_home:/var/jenkins_home
+        prometheus:
+          image: prom/prometheus
+          ports:
+            - "9090:9090"
+        grafana:
+          image: grafana/grafana
+          ports:
+            - "3000:3000"
+      volumes:
+        jenkins_home:
+    dest: /opt/monitoring/docker-compose.yml
+
+- name: Запустить мониторинг
+  shell: docker-compose up -d
+  args:
+    chdir: /opt/monitoring
+

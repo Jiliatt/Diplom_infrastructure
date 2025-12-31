@@ -1,0 +1,19 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+terraform.tfstate.*
+.crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+*.tfvars
+!.terraform-version
+!.pre-commit-config.yaml
+
+# Yandex Cloud
+*.pem
+*.key
+yc-config.json
