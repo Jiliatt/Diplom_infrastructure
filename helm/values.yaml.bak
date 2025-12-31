@@ -1,0 +1,35 @@
+image:
+  repository: emdon2106/diplom-django  # твой Docker Hub / YCR
+  tag: "latest"
+  pullPolicy: Always
+
+replicaCount: 2
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 3003
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "password"  # меняй!
+    username: "vinhle"
+    password: "password"
+    database: "tutorial-dev"
+  primary:
+    persistence:
+      size: 5GiA
+    service:
+      port: 5432
+
+
+django:
+  dbHost: "{{ .Release.Name }}-postgresql"
+  dbName: "tutorial-dev"
+  dbUser: "vinhle"
+  dbPass: "password"
+
+
+ingress:
+  enabled: false  # включи позже
