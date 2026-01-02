@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: diplom-app
+  namespace: argocd  # ← Контроллер здесь!
+spec:
+  source:
+    repoURL: https://github.com/Jiliatt/Diplom_infrastructure.git
+    targetRevision: feature/k8s-deploy
+    path: k8s-manifests
+  destination:
+    namespace: diplom  # ← Поды здесь!
+  syncPolicy:
+    automated: {}
