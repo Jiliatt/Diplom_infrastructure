@@ -4,6 +4,7 @@ metadata:
   name: diplom-app
   namespace: argocd  # ← Контроллер здесь!
 spec:
+  project: default
   source:
     repoURL: https://github.com/Jiliatt/Diplom_infrastructure.git
     targetRevision: feature/k8s-deploy
