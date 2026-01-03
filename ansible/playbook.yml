@@ -12,10 +12,18 @@
         state: present
         update_cache: yes
 
+    - name: Install MicroK8s on ALL nodes
+      shell: snap install microk8s --classic --channel=1.28 || true
+
 - name: Setup Master (k8s-master ONLY)
   hosts: k8s-master  # ← ТОЧНЫЙ ХОСТ!
   become: yes
   tasks:
+    - name: Wait for microk8s status ready
+      shell: microk8s status --wait-ready
+      retries: 10
+      delay: 10
+
     - name: Enable MicroK8s addons
       shell: microk8s enable dns helm3 storage registry || true
 
@@ -37,17 +45,64 @@
           Username: admin
           Password: {{ argocd_pass.stdout }}
         dest: /home/ubuntu/ARGOCD-CREDENTIALS.txt
+     
+    - name: Setup ubuntu for microk8s
+      block:
+        - name: Add ubuntu to microk8s group
+          user:
+            name: ubuntu
+            groups: microk8s
+            append: yes
+     
+        - meta: reset_connection
+
+        - name: Create kube config dir
+          file:
+            path: /home/ubuntu/.kube
+            state: directory
+            owner: ubuntu
+            group: ubuntu
+        
+        - name: Copy microk8s config
+          shell: microk8s config > /home/ubuntu/.kube/config
+          become: no
+          become_user: ubuntu
+            
+    - name: Generate worker join token
+      shell: microk8s add-node
+      register: join_token
+
+    - name: Save join token to file
+      copy:
+        content: "{{ join_token.stdout }}"
+        dest: /home/ubuntu/worker-join-token.txt
 
 - name: Setup Worker (k8s-worker ONLY)
   hosts: k8s-worker  # ← ТОЧНЫЙ ХОСТ!
   become: yes
+  vars:
+    master_ip: "158.160.14.198"
   tasks:
-    - name: Add to microk8s group
+    - name: Wait microk8s ready
+      shell: microk8s status --wait-ready
+      retries: 10
+      delay: 10
+
+    - name: Add ubuntu to microk8s group on worker
       user:
         name: ubuntu
         groups: microk8s
         append: yes
+      ignore_errors: yes
+    
+        #- name: Get join token from master (delegate to master)
+        #shell: ssh ubuntu@158.160.14.198 "cat /home/ubuntu/worker-join-token.txt | head -n1"
+        #register: join_cmd
 
+        #- name: Join !
+        #shell: "{{ join_cmd.stdout }}"
+
+      
 - name: Setup Jenkins (jenkins-node ONLY)
   hosts: jenkins-node  # ← ТОЧНЫЙ ХОСТ!
   become: yes
@@ -56,3 +111,9 @@
       apt:
         name: openjdk-17-jdk
         state: present
+
+    - name: Start Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: started

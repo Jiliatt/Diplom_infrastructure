@@ -15,7 +15,7 @@ def main():
             'k8s_app_ip': outputs['k8s_app_ip']['value'],
             'srv_monitoring_ip': outputs['srv_monitoring_ip']['value']
         }
-        print(f"DEBUG: IPs loaded: {ips}", file=sys.stderr)
+        #print(f"DEBUG: IPs loaded: {ips}", file=sys.stderr)
     except:
         sys.exit(1)
 
