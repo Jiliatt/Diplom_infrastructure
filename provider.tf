@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "yandex" {
-  token     = "$yc iam create-token"   # САМ ВСТАВЛЯЕШЬ СЮДА СВОЙ ТОКЕН ДЛИННЫЙ 
+  token     = "y0__xDvxZXvBRjB3RMgt_L9gRTXi62RsdI1gEJKnlopHpUqOQuuvg" # САМ ВСТАВЛЯЕШЬ СЮДА СВОЙ ТОКЕН ДЛИННЫЙ 
   folder_id = "b1g2dh5hul1tiuhpl1bk"
   zone      = "ru-central1-b"
 }

@@ -12,9 +12,10 @@ terraform apply
 export TF_VAR_yc_token="$(yc iam create-token)"
 export TF_VAR_yc_cloud_id="$(yc config list | grep cloud-id | cut -d'"' -f4)"
 export TF_VAR_yc_folder_id="$(yc config list | grep folder-id | cut -d'"' -f4)"
+#------меняешь в provider.tf на свой токен !!! (перед terraform apply)
 
 cd ansible (перед этим меняем хосты (айпи адреса) в ансибл-файле)
-ansible-playbook -i inventory/dynamic-inventory.yml playbook.yml
+ansible-playbook -i inventory/dynamic-inventory.py playbook.yml
 
 ### 3. ПРОВЕРКА
 ssh ubuntu@84.252.143.154 "sudo microk8s kubectl get nodes"
