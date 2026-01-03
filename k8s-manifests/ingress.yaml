@@ -1,10 +1,14 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: diplom
+  name: diplom-ingress
+  namespace: diplom
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx  # microk8s default
   rules:
-  - host: *  # или *
+  - host: diplom.local  # или *
     http:
       paths:
       - path: /
