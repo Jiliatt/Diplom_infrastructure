@@ -20,6 +20,8 @@ RUN mkdir /app
 WORKDIR /app
 COPY ./app /app
 
+RUN pip install gunicorn
+
 # [Security] Limit the scope of user who run the docker image
 RUN adduser -D user
 

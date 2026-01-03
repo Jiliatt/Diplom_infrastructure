@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         REGISTRY = 'edmon2106/diplom-django'
-        KUBE_MASTER = 'ubuntu@84.252.143.154'
+        KUBE_MASTER = 'ubuntu@89.169.187.139'
     }
     stages {
         stage('Build Docker') {
