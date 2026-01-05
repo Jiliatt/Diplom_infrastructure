@@ -60,3 +60,18 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+PostgreSQL service name from Bitnami subchart
+*/}}
+{{- define "django-temp.postgresql.host" -}}
+{{ .Release.Name }}-postgresql
+{{- end -}}
+
+{{/*
+PostgreSQL secret name
+*/}}
+{{- define "django-temp.postgresql.secret" -}}
+{{ .Release.Name }}-postgresql
+{{- end -}}
+

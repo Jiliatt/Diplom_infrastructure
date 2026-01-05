@@ -33,17 +33,32 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          
+          env:
+          - name: POSTGRES_HOST
+            value: {{ include "django-temp.postgresql.host" . }}
+          - name: POSTGRES_DB
+            value: "{{ .Values.postgresql.auth.database }}"
+          - name: POSTGRES_USER
+            value: "{{ .Values.postgresql.auth.username }}"
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "django-temp.postgresql.secret" . }}
+                key: password
+          - name: DATABASE_URL
+            value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
           ports:
             - name: http
               containerPort: 3003
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
+              path: /health
               port: http
           readinessProbe:
             httpGet:
-              path: /
+              path: /health
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
