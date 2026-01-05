@@ -1,9 +1,9 @@
 ---------------------------
-Логика: "перед деплоем убедиться, что чарт не сломан" on master noda
-cd ~/proj/terraf/diplom_v1_app/helm
-helm lint .
-helm dependency update  # Скачает Bitnami postgres
-helm template myapp . | grep -A5 "volumeClaimTemplates"
+###Логика: "перед деплоем убедиться, что чарт не сломан" on master noda
+###cd ~/proj/terraf/diplom_v1_app/helm
+###helm lint .
+###helm dependency update  # Скачает Bitnami postgres
+###helm template myapp . | grep -A5 "volumeClaimTemplates"
 ---------------------------
 
 -------------------------------
