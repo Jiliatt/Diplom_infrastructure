@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Build & Deploy
+name: CI/CD Pipeline - Build & Deploy #GitHub Actions on release in my project
 
 on:
   push:
