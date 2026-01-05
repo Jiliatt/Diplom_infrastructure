@@ -1,11 +1,3 @@
----------------------------
-###Логика: "перед деплоем убедиться, что чарт не сломан" on master noda
-###cd ~/proj/terraf/diplom_v1_app/helm
-###helm lint .
-###helm dependency update  # Скачает Bitnami postgres
-###helm template myapp . | grep -A5 "volumeClaimTemplates"
----------------------------
-
 -------------------------------
 #on server srv-monitoring  
 http://IP-srv-monitoring:8080 # ON JENKINS UI
@@ -46,6 +38,13 @@ Events: ✓ Push events, ✓ Releases
 ========================
 
 
+---------------------------
+Логика: "перед деплоем убедиться, что чарт не сломан" on master noda
+cd ~/proj/terraf/diplom_v1_app/helm
+helm lint .
+helm dependency update  # Скачает Bitnami postgres
+helm template myapp . | grep -A5 "volumeClaimTemplates"
+---------------------------
 
 ========================
 #Если оставляешь GitHub Actions то ко всему прочему последний шаг для релиза сделай
