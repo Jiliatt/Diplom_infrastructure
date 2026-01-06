@@ -7,6 +7,7 @@ pipeline {
     }
     triggers {  // ← ТРИГГЕР ПО ТЕГАМ
         pollSCM('H/5 * * * *')
+    }
     stages {
         stage('Build Docker') {
             when { tag pattern: "v.*", comparator: "REGEXP" }
