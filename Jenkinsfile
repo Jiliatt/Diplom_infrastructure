@@ -26,13 +26,13 @@ pipeline {
                 sshagent(credentials: ['k8s-master-ssh']) {
                     sh '''
                         ssh ${KUBE_MASTER} "
-			    cd ~/Diplom_infrastructure
-                            git pull origin feature/k8s-deploy	
-                            microk8s helm repo add bitnami https://charts.bitnami.com/bitnami || true
-                            microk8s helm repo update
+			    cd ~/Diplom_infrastructure &&
+                            git pull origin feature/k8s-deploy &&	
+                            microk8s helm repo add bitnami https://charts.bitnami.com/bitnami || true &&
+                            microk8s helm repo update &&
                             microk8s helm upgrade --install diplom-app ./helm --namespace diplom-app --create-namespace \\
                                 --set image.repository='${REGISTRY}' \\
-                                --set image.tag='${IMAGE_TAG}'
+                                --set image.tag='${IMAGE_TAG}' \\
 				--wait --timeout 5m
                         "
                     '''
