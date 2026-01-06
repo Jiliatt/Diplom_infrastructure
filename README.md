@@ -1,6 +1,7 @@
 -------------------------------
 #on server srv-monitoring  
 http://IP-srv-monitoring:8080 # ON JENKINS UI
+sudo cat /var/lib/docker/volumes/monitoring_jenkins_home/_data/secrets/initialAdminPassword  
 Dashboard → New Item → "Diplom_infrastructure" → Pipeline → OK
 
 меняю айпи в jenkinsfile 
@@ -15,7 +16,6 @@ Configure:
 │   ← ВСТАВЬ свой Jenkinsfile из ~/proj/terraf/diplom_v1_app/Jenkinsfile
 └── Save
 Build Now → #1 → Console Output → смотри логи
-
 -------------------------------
 
 ----------------------------------
