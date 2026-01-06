@@ -3,7 +3,7 @@ pipeline {
     environment {
         REGISTRY = 'edmon2106/diplom-django'
 	IMAGE_TAG = "${GIT_TAG_NAME}"
-        KUBE_MASTER = 'ubuntu@89.169.187.139' //zamena IP srv-monitoring
+        KUBE_MASTER = 'ubuntu@89.169.187.139' //zamena IP k8s-master
     }
     triggers {  // ← ТРИГГЕР ПО ТЕГАМ!
         gitlab(triggerOnPush: true, branchFilterType: 'RegexBasedFilter', branchFilterPattern: "feature/k8s-deploy")
@@ -44,4 +44,5 @@ pipeline {
             sh 'docker image prune -f'
         }
     }
+}
 }
