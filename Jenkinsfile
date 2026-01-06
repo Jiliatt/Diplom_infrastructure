@@ -6,14 +6,15 @@ pipeline {
         KUBE_MASTER = 'ubuntu@158.160.80.129' //zamena IP k8s-master
     }
     triggers {  // ← ТРИГГЕР ПО ТЕГАМ
-        pollSCM('H/5 * * * *')
+        pollSCM('H/1 * * * *')
     }
     stages {
         stage('Build Docker') {
             when { tag pattern: "v.*", comparator: "REGEXP" }
             steps {
                 script {
-                    def image = docker.build("${REGISTRY}:${BUILD_NUMBER}")
+		    def tag = env.BUILD_NUMBER
+		    def image = docker.build("edmon2106/diplom-django:${tag}")
                     docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
                         image.push("${IMAGE_TAG}")
                         image.push('latest')
