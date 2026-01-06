@@ -28,7 +28,6 @@ pipeline {
                         ssh ${KUBE_MASTER} "
 			    cd ~/Diplom_infrastructure &&
                             git pull origin feature/k8s-deploy &&	
-			    microk8s helm registry login registry-1.docker.io &&
                             microk8s helm install diplom-app oci://registry-1.docker.io/bitnamicharts/postgresql &&
                             microk8s helm repo update &&
                             microk8s helm upgrade --install diplom-app ./helm --namespace diplom-app --create-namespace \\
