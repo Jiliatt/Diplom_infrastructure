@@ -3,7 +3,7 @@ pipeline {
     environment {
         REGISTRY = 'edmon2106/diplom-django'
 	IMAGE_TAG = "${env.BUILD_NUMBER}"
-        KUBE_MASTER = 'ubuntu@89.169.187.139' //zamena IP k8s-master
+        KUBE_MASTER = 'ubuntu@158.160.80.129' //zamena IP k8s-master
     }
     triggers {  // ← ТРИГГЕР ПО ТЕГАМ
         pollSCM('H/5 * * * *')
