@@ -35,7 +35,7 @@ pipeline {
                                 --set image.tag='${IMAGE_TAG}'
 				--wait --timeout 5m
                         "
-                       '''
+                    '''
                 }
             }
         }
