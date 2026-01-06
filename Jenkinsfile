@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         REGISTRY = 'edmon2106/diplom-django'
-	IMAGE_TAG = "${GIT_TAG_NAME}"
+	IMAGE_TAG = "${env.BUILD_NUMBER}"
         KUBE_MASTER = 'ubuntu@89.169.187.139' //zamena IP k8s-master
     }
     triggers {  // ← ТРИГГЕР ПО ТЕГАМ
