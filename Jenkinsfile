@@ -29,7 +29,6 @@ pipeline {
 			    cd ~/Diplom_infrastructure &&
                             git pull origin feature/k8s-deploy &&	
                             microk8s helm install diplom-app oci://registry-1.docker.io/bitnamicharts/postgresql &&
-                            microk8s helm repo update &&
                             microk8s helm upgrade --install diplom-app ./helm --namespace diplom-app --create-namespace --reuse-values \\
                                 --set image.repository='${REGISTRY}' \\
                                 --set image.tag='${IMAGE_TAG}' \\
@@ -42,7 +41,7 @@ pipeline {
     }
     post {
         always {
-            sh 'docker image prune -f'
+	    echo 'Cleanup skipped - no Docker in Jenkins agent'
         }
     }
 }
