@@ -3,8 +3,9 @@
 http://IP-srv-monitoring:8080 # ON JENKINS UI
 sudo cat /var/lib/docker/volumes/monitoring_jenkins_home/_data/secrets/initialAdminPassword  
 Dashboard → New Item → "Diplom_infrastructure" → Pipeline → OK
-
 меняю айпи в jenkinsfile 
+Зайти в Jenkins → Manage Jenkins → Manage Plugins → Available.
+Найти “SSH Agent Plugin” и установить
 
 Configure:
 ├── General → GitHub project → Project url: https://github.com/Jiliatt/Diplom_infrastructure (Branch: feature/k8s-deploy)
