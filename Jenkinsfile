@@ -13,18 +13,19 @@ pipeline {
         stage('Build Docker') {
             steps {
                 sshagent(credentials: ['k8s-master-ssh']) {
-                    sh """
-                        ssh \${KUBE_MASTER} "
+                    sh '''
+                        ssh ${KUBE_MASTER} "
                             cd ~/Diplom_infrastructure &&
                             git pull origin feature/k8s-deploy &&
                             echo '\${DOCKER_PASSWORD}' | docker login -u edmon2106 --password-stdin &&
                             docker build -t \${REGISTRY}:\${IMAGE_TAG} . &&
-                            docker push \${REGISTRY}:\${IMAGE_TAG} &&
+                            docker push \${REGISTRY}:\${IMAGE_TAG} 
                         "
-                    """
+                    '''
                 }
             }
         }
+    
         stage('Deploy to K8s') {
             steps {
                 sshagent(credentials: ['k8s-master-ssh']) {
