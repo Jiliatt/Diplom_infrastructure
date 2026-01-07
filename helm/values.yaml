@@ -15,7 +15,7 @@ affinity: {}
 
 image:
   repository: emdon2106/diplom-django  # твой Docker Hub / YCR
-  tag: "v2.0"
+  tag: ""
   pullPolicy: Always
 
 replicaCount: 2
