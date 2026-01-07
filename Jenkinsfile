@@ -4,6 +4,7 @@ pipeline {
         REGISTRY = 'edmon2106/diplom-django'
 	IMAGE_TAG = "${env.BUILD_NUMBER}"
         KUBE_MASTER = 'ubuntu@158.160.31.208' //zamena IP k8s-master
+	DOCKER_PASSWORD = 'Linck0ut_putt%27'
     }
     triggers {  // ← ТРИГГЕР ПО ТЕГАМ
         pollSCM('H/1 * * * *')
@@ -12,13 +13,12 @@ pipeline {
         stage('Build Docker') {
             steps {
                 script {
-		    def tag = env.IMAGE_TAG
-		    def image = docker.build("edmon2106/diplom-django:${tag}")
-                    def latestImage = docker.build("${REGISTRY}:latest")
-		    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-                        image.push()
-                        latestImage.push()
-                    }
+                    echo '\${DOCKER_PASSWORD}' | docker login -u edmon2106 --password-stdin &&
+                    # Build & Push
+                    docker build -t \${REGISTRY}:\${IMAGE_TAG} . &&
+                    docker tag \${REGISTRY}:\${IMAGE_TAG} \${REGISTRY}:latest &&
+                    docker push \${REGISTRY}:\${IMAGE_TAG} &&
+                    docker push \${REGISTRY}:latest
                 }
             }
         }
