@@ -10,14 +10,14 @@ pipeline {
     }
     stages {
         stage('Build Docker') {
-            when { tag pattern: "v.*", comparator: "REGEXP" }
             steps {
                 script {
-		    def tag = env.BUILD_NUMBER
+		    def tag = env.IMAGE_TAG
 		    def image = docker.build("edmon2106/diplom-django:${tag}")
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-                        image.push("${IMAGE_TAG}")
-                        image.push('latest')
+                    def latestImage = docker.build("${REGISTRY}:latest")
+		    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
+                        image.push()
+                        latestImage.push()
                     }
                 }
             }
@@ -41,7 +41,7 @@ pipeline {
     }
     post {
         always {
-	    echo 'Cleanup skipped - no Docker in Jenkins agent'
+	    echo 'Pipeline completed'
         }
     }
 }
