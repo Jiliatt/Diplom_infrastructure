@@ -7,8 +7,6 @@ pipeline {
     }
     triggers {  // ← ТРИГГЕР ПО ТЕГАМ
         pollSCM('H/1 * * * *')
-	IMAGE_TAG = "${GIT_TAG_NAME}"
-        KUBE_MASTER = 'ubuntu@89.169.187.139' //zamena IP srv-monitoring
     }
     stages {
         stage('Build Docker') {
