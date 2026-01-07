@@ -14,7 +14,6 @@ pipeline {
             steps {
                 script {
                     echo '\${DOCKER_PASSWORD}' | docker login -u edmon2106 --password-stdin &&
-                    # Build & Push
                     docker build -t \${REGISTRY}:\${IMAGE_TAG} . &&
                     docker tag \${REGISTRY}:\${IMAGE_TAG} \${REGISTRY}:latest &&
                     docker push \${REGISTRY}:\${IMAGE_TAG} &&
