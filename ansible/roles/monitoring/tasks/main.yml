@@ -22,6 +22,22 @@
     path: /opt/monitoring
     state: directory
 
+
+- name: Создать configs поддиректорию
+  file: path=/opt/monitoring/configs state=directory
+
+- name: Deploy Prometheus config
+  template: src=../templates/prometheus.yml.j2 dest=/opt/monitoring/configs/prometheus.yml
+
+- name: Deploy Alertmanager config
+  template: src=../templates/alertmanager.yml.j2 dest=/opt/monitoring/configs/alertmanager.yml
+
+- name: Deploy Alerts rules  
+  template: src=../templates/alerts.yml.j2 dest=/opt/monitoring/configs/alerts.yml
+
+- name: Deploy Blackbox config
+  copy: src=../files/blackbox.yml dest=/opt/monitoring/configs/blackbox.yml
+      
 - name: Создать docker-compose.yml
   copy:
     content: |
@@ -38,16 +54,48 @@
           image: prom/prometheus
           ports:
             - "9090:9090"
+          volumes:
+            - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
+            - ./configs/alertmanager.yml:/etc/prometheus/alertmanager.yml
+            - prometheus_data:/prometheus  # Данные
+          command:  
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--rule=/etc/prometheus/alerts.yml'
+    
         grafana:
           image: grafana/grafana
           ports:
             - "3000:3000"
+          environment:  # ← ДОБАВЬ
+            - GF_SECURITY_ADMIN_USER=admin
+            - GF_SECURITY_ADMIN_PASSWORD=admin
+          volumes: [grafana_data:/var/lib/grafana]
+          restart: always
+
+        node-exporter:
+          image: prom/node-exporter:v1.8.2
+          ports: ["9100:9100"]
+          volumes: ["/proc:/host/proc:ro", "/sys:/host/sys:ro", "/:/rootfs:ro"]
+        blackbox-exporter:
+          image: prom/blackbox-exporter:v0.25.0
+          ports: ["9115:9115"]
+          volumes: ['./configs/blackbox.yml:/config/blackbox.yml']
+        loki:
+          image: grafana/loki:3.1.1
+          ports: ["3100:3100"]
+          volumes: [loki_data:/loki]
+          command: -config.file=/etc/loki/local-config.yaml
+          restart: always
       volumes:
+        loki_data:
+        prometheus_data:
+        grafana_data:
         jenkins_home:
     dest: /opt/monitoring/docker-compose.yml
 
 - name: Запустить мониторинг
-  shell: docker-compose up -d
+  shell: docker-compose down || true; docker-compose up -d --remove-orphans
   args:
     chdir: /opt/monitoring
 

@@ -77,6 +77,43 @@
         content: "{{ join_token.stdout }}"
         dest: /home/ubuntu/worker-join-token.txt
 
+
+
+- name: GitOps Deploy diplom-app (k8s-master)
+  hosts: k8s-master
+  become: no  # ubuntu user
+  tasks:
+    - name: SSH keygen for GitHub
+      shell: ssh-keygen -t ed25519 -C "k8s-master" -f ~/.ssh/id_ed25519 -N ""
+      ignore_errors: yes
+
+    - name: Show pubkey (manual GitHub step)
+      shell: cat ~/.ssh/id_ed25519.pub
+      register: ssh_pubkey
+
+    - debug:
+        msg: |
+          ADD TO GITHUB: https://github.com/Jiliatt/Diplom_infrastructure → Settings → SSH keys
+          KEY: {{ ssh_pubkey.stdout }}
+
+    - name: Clone repo
+      git:
+        repo: git@github.com:Jiliatt/Diplom_infrastructure.git
+        dest: ~/Diplom_infrastructure
+        version: feature/k8s-deploy
+        accept_hostkey: yes
+        key_file: ~/.ssh/id_ed25519
+
+    - name: Namespace + Argo App
+      shell: |
+        kubectl apply -f ~/Diplom_infrastructure/k8s-manifests/namespace.yaml
+        kubectl apply -f ~/Diplom_infrastructure/tmp/diplom-app.yaml -n argocd
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+
+
+
+
 - name: Setup Worker (k8s-worker ONLY)
   hosts: k8s-worker  # ← ТОЧНЫЙ ХОСТ!
   become: yes
@@ -103,7 +140,7 @@
         #shell: "{{ join_cmd.stdout }}"
 
       
-- name: Setup Jenkins (jenkins-node ONLY)
+- name: Setup Jenkins (srv-monitoring ONLY)
   hosts: jenkins-node  # ← ТОЧНЫЙ ХОСТ!
   become: yes
   tasks:
@@ -117,3 +154,54 @@
         name: docker
         enabled: yes
         state: started
+
+- name: Deploy K8s Logging (Loki/Promtail)
+  hosts: k8s-master
+  become: yes
+  vars:
+    srv_monitoring_ip: "{{ hostvars['jenkins-node']['ansible_host'] }}"
+  tasks:
+    - name: Add Grafana Helm
+      shell: microk8s helm3 repo add grafana https://grafana.github.io/helm-charts
+
+    - name: Update repos
+      shell: microk8s helm3 repo update
+
+    - name: Install Loki/Promtail → srv
+      shell: |
+        microk8s helm3 upgrade --install loki grafana/loki \
+          --namespace logging --create-namespace \
+          --set promtail.enabled=true \
+          --set "promtail.config.clients[0].url=http://{{ srv_monitoring_ip }}:3100/loki/api/v1/push"
+
+- name: Auto-config srv vars/main.yml
+  hosts: k8s-master
+  become: no  # kubectl без sudo
+  vars:
+    srv_monitoring_ip: "{{ hostvars['jenkins-node']['ansible_host'] }}"
+  tasks:
+    - name: Get K8s node IP
+      shell: kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'
+      register: k8s_node
+
+    - name: Get NodePort
+      shell: kubectl get svc diplom-app -o jsonpath='{.spec.ports[0].nodePort}'
+      register: node_port
+
+    - name: Get K8s API
+      shell: kubectl cluster-info | grep 'control plane' | awk '{print $NF}'
+      register: k8s_api
+
+    - name: Update srv vars/main.yml (auto)
+      shell: |
+        cat > /opt/monitoring/configs/vars/main.yml << EOF
+        app_target: "{{ k8s_node.stdout }}:{{ node_port.stdout }}"
+        k8s_api: "{{ k8s_api.stdout }}"
+        telegram_bot_token: "ТВОЙ_ТОКЕН_ЗДЕСЬ" #add new
+        telegram_chat_id: "ТВОЙ_CHAT_ID_ЗДЕСЬ" #add new
+        EOF
+      delegate_to: "{{ groups['jenkins-node'][0] }}"
+
+    - name: Restart prometheus
+      shell: cd /opt/monitoring && docker-compose restart prometheus
+      delegate_to: "{{ groups['jenkins-node'][0] }}"

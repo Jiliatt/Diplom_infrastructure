@@ -1,0 +1,4 @@
+app_target: "k8s-ip-master-node:random-port-on-node"  #kubectl get svc diplom-app PORT берешь; kubectl get nodes -o wide айпи берешь
+telegram_bot_token: "12345:ABC..."  # ← Telegram @BotFather
+telegram_chat_id: "-1001234567890"  #/getUpdate
+k8s_api: "https://k8s-master-ip:6443" #kubectl cluster-info | grep 'Kubernetes control plane'

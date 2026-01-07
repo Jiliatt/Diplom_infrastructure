@@ -1,0 +1,4 @@
+modules:
+  http_2xx: {prober: http, timeout: 5s, http: {valid_status_codes: [200], method: GET}}
+  tls_connect: {prober: tcp, timeout: 5s, tcp: {tls: true}}
+

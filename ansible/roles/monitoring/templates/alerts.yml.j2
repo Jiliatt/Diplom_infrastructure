@@ -1,0 +1,16 @@
+groups:
+- name: srv-disk
+  rules:
+  - alert: DiskLow
+    expr: (1 - node_filesystem_avail_bytes{job="node",mountpoint="/"} / node_filesystem_size_bytes{job="node",mountpoint="/"}) * 100 > 90
+    for: 2m
+    labels: {severity: critical}
+    annotations: {summary: "Disk 90%+ on {{ $labels.instance }}"}
+- name: app-alerts
+  rules:
+  - alert: AppDown
+    expr: probe_success{job="blackbox"} == 0
+    for: 1m
+    labels: {severity: critical}
+    annotations: {summary: "App {{ $labels.instance }} DOWN"}
+

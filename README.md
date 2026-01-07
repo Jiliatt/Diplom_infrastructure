@@ -24,10 +24,15 @@ ansible-playbook -i inventory/dynamic-inventory.py playbook.yml
 ssh ubuntu@IP-master-node 
 
 ####GitOps deploy: 
-git clone -b feature/k8s-deploy git@github.com:Jilliat/Diplom_infrastructure.git
+ssh-keygen -t ed25519 -C "k8s-master"    # жмёшь Enter везде
+cat ~/.ssh/id_ed25519.pub  --> Скопировать вывод id_ed25519.pub и добавить в GitHub → Settings → SSH and GPG keys → New SSH key → вставить
+git clone -b feature/k8s-deploy git@github.com:Jiliatt/Diplom_infrastructure.git
 cd ~/Diplom_infrastructure
 git checkout feature/k8s-deploy
 git push origin feature/k8s-deploy  #ArgoCD auto-detect → Sync → Deploy
+
+microk8s kubectl apply -f k8s-manifests/namespace.yaml
+microk8s kubectl apply -f tmp/diplom-app.yaml -n argocd
 
 ####Kогда зашел на мастер-ноду и проверяешь все -- 
 !!TOP!! microk8s kubectl get applications -n argocd    # должно Healthy
