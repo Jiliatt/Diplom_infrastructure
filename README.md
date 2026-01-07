@@ -6,27 +6,21 @@ Dashboard → New Item → "Diplom_infrastructure" → Pipeline → OK
 меняю айпи в jenkinsfile 
 Зайти в Jenkins → Manage Jenkins → Manage Plugins → Available.
 Найти “SSH Agent Plugin” и установить
+делаешь pipeline from SCM и там указываешь твой созданный глобальны credential и что берешь из jenkinsfile сам скрипт (который в репо удаленном) 
 
+добавить dockerhub (id=dockerhub) and ubuntu-ssh-to-master-node  в credential global!
 Configure:
 ├── General → GitHub project → Project url: https://github.com/Jiliatt/Diplom_infrastructure (Branch: feature/k8s-deploy)
 ├── Build Triggers → 
 │   ✓ GitHub hook trigger for GITScm polling
-│   ✓ Poll SCM (H/5 * * * *)  # Каждые 5 мин
+│   ✓ Poll SCM (H/1 * * * *)  # Каждyu 1 мин
 ├── Pipeline → 
-│   Definition: Pipeline script
-│   ← ВСТАВЬ свой Jenkinsfile из ~/proj/terraf/diplom_v1_app/Jenkinsfile
+│   Definition: Pipeline script from SCM
+│     делаешь pipeline from SCM и там указываешь твой созданный глобальны credential и что берешь из jenkinsfile сам скрипт (который в репо удаленном) 
 └── Save
 Build Now → #1 → Console Output → смотри логи
 -------------------------------
 
-----------------------------------
-##Автоматизация (git push/tag → Jenkins):
-GitHub repo → Settings → Webhooks → Add webhook:
-
-Payload URL: http://IP-srv-monitoring:8080/github-webhook/
-Content type: application/json
-Events: ✓ Push events, ✓ Releases
-----------------------------------
 
 ========================
 ###Kак должно работать Infrastructure in all:
