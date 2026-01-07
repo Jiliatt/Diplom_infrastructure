@@ -19,7 +19,6 @@ pipeline {
                             git pull origin feature/k8s-deploy &&
                             echo '\${DOCKER_PASSWORD}' | docker login -u edmon2106 --password-stdin &&
                             docker build -t \${REGISTRY}:\${IMAGE_TAG} . &&
-                            docker tag \${REGISTRY}:\${IMAGE_TAG} &&
                             docker push \${REGISTRY}:\${IMAGE_TAG} &&
                         "
                     """
