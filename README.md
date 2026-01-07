@@ -1,4 +1,4 @@
--------------------------------
+--------------------------------
 #on server srv-monitoring  
 http://IP-srv-monitoring:8080 # ON JENKINS UI
 sudo cat /var/lib/docker/volumes/monitoring_jenkins_home/_data/secrets/initialAdminPassword  
