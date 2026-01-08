@@ -14,10 +14,18 @@ terraform plan
 terraform apply -auto-approve
 
 ## 2. КОМАНДЫ ДЕПЛОЯ (копипаст)
-cd ansible (перед этим меняем хосты (айпи адреса) в ансибл-файле - eсли используешь нединамичный файл то да, если как ниже написано – ниче не меняешь)
+## сначала терраформ, ансибл, дженкинс, затем добавляешь дашборды в графане
+
+## В скрипт ансибла добавить своего ТГ-бота!!
+
+cd ansible 
 ansible-playbook -i inventory/dynamic-inventory.py playbook.yml
-Скопировать вывод id_ed25519.pub и добавить в GitHub → Settings → SSH and GPG keys → New SSH key → вставить
+## Скопировать вывод id_ed25519.pub и добавить в GitHub → Settings → SSH and GPG keys → New SSH key → вставить
 ansible-playbook -i inventory/dynamic-inventory.py playbook.yml --start-at-task="Clone repo"
+
+в модуле терраформа (функция remote-exec) изменить на свои айпи внутренние после дженкинса, полсе того как появится diplom-app 
+(там есть подсказка где конкретно)
+
 ==============================================================================
 
 
@@ -33,11 +41,25 @@ git push origin feature/k8s-deploy  #ArgoCD auto-detect → Sync → Deploy
 !!TOP!! microk8s kubectl get applications -n argocd    # должно Healthy
 !!TOP!! microk8s kubectl get all -n diplom             # ArgoCD GitOps
 !!TOP!! microk8s kubectl get all -n diplom-app         # Jenkins CI/CD (Helm + тег)
-microk8s kubectl get ns                                # diplom-app & diplom & argocd &
-microk8s kubectl describe application diplom-app -n argocd
-microk8s kubectl get pods -n argocd                    # argocd-server Running
 microk8s kubectl logs deployment/diplom-app -n diplom  # Django логи
-microk8s kubectl get svc -n diplom -o wide
+
+  проверка после ансибл скрипта (мониторинг-сервер)
+curl SRV-monitoring _IP:9090/targets  # node/blackbox/prometheus UP
+curl SRV-monitoring _IP:3000          # Grafana login
+curl SRV-monitoring_IP:3100/ready    # Loki ready
+
+ (ЭТО НА МАСТЕР НОДЕ snizy)
+microk8s kubectl get pods -n logging  # loki-0 promtail-daemonset UP 
+microk8s kubectl logs -n logging -l app.kubernetes.io/name=promtail  # видит srv:3100? 
+   Алерты:
+microk8s kubectl delete pod -l app=diplom-app  # recreate
+curl localhost:9090/api/v1/alerts  # AppDown firing
+Telegram → "App diplom-app DOWN" <2min!
+
+Затем настраиваешь графану (дашборды) на мониторинг-сервере:
+Grafana (ip:3000 admin/admin):
+Add Prometheus datasource Prometheus (http://prometheus:9090) Loki (http://loki:3100).
+Import dashboards 1860 Node Exporter Full && 6417 K8s Cluster && 12019 Loki Logs (фильтр {app="diplom-app"})
 
 
 microk8s kubectl get all -n diplom        # ArgoCD app
