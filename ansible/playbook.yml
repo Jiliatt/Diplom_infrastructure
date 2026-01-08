@@ -30,9 +30,9 @@
     - name: Deploy ArgoCD
       shell: |
         microk8s kubectl create ns argocd || true
-        microk8s helm repo add argo https://argoproj.github.io/argo-helm || true
-        microk8s helm repo update
-        microk8s helm install argocd argo/argo-cd --namespace argocd || true
+        microk8s helm3 repo add argo https://argoproj.github.io/argo-helm || true
+        microk8s helm3 repo update
+        microk8s helm3 install argocd argo/argo-cd --namespace argocd || true
 
     - name: Get ArgoCD password
       shell: microk8s kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
@@ -118,7 +118,7 @@
   hosts: k8s-worker  # ← ТОЧНЫЙ ХОСТ!
   become: yes
   vars:
-    master_ip: "158.160.14.198"
+    master_ip: "{{ hostvars['k8s-master']['ansible_host'] }}"
   tasks:
     - name: Wait microk8s ready
       shell: microk8s status --wait-ready
@@ -132,12 +132,21 @@
         append: yes
       ignore_errors: yes
     
-        #- name: Get join token from master (delegate to master)
-        #shell: ssh ubuntu@158.160.14.198 "cat /home/ubuntu/worker-join-token.txt | head -n1"
+        #нужно для подключения воркер ноды (инчае будет сингл мастер нода)
+        #- name: Wait for join token on master
+        #wait_for_connection:
+        #host: "{{ master_ip }}"
+        #port: 22
+        #delegate_to: localhost
+
+        #- name: Get join token from master (SSH)
+        #shell: ssh ubuntu@{{ master_ip }} "cat /home/ubuntu/worker-join-token.txt"
         #register: join_cmd
 
-        #- name: Join !
-        #shell: "{{ join_cmd.stdout }}"
+        #- name: Join cluster!
+        #shell: "{{ join_cmd.stdout_lines[0] }}"  # ← Только первую строку!
+        #become: yes
+
 
       
 - name: Setup Jenkins (srv-monitoring ONLY)
@@ -183,22 +192,30 @@
     - name: Get K8s node IP
       shell: kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'
       register: k8s_node
+      environment: 
+        KUBECONFIG: /home/ubuntu/.kube/config
+
 
     - name: Get NodePort
       shell: kubectl get svc diplom-app -o jsonpath='{.spec.ports[0].nodePort}'
       register: node_port
+      environment:          
+        KUBECONFIG: /home/ubuntu/.kube/config
 
     - name: Get K8s API
       shell: kubectl cluster-info | grep 'control plane' | awk '{print $NF}'
       register: k8s_api
+      environment:          
+        KUBECONFIG: /home/ubuntu/.kube/config
+
 
     - name: Update srv vars/main.yml (auto)
       shell: |
         cat > /opt/monitoring/configs/vars/main.yml << EOF
         app_target: "{{ k8s_node.stdout }}:{{ node_port.stdout }}"
         k8s_api: "{{ k8s_api.stdout }}"
-        telegram_bot_token: "ТВОЙ_ТОКЕН_ЗДЕСЬ" #add new
-        telegram_chat_id: "ТВОЙ_CHAT_ID_ЗДЕСЬ" #add new
+        telegram_bot_token: "8503785351:AAEeSuzGp3y7CMZt1rjFuUw4vDUMEM3F_RU" #add new
+        telegram_chat_id: "980315984" #add new
         EOF
       delegate_to: "{{ groups['jenkins-node'][0] }}"
 
