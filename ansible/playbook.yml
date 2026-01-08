@@ -106,8 +106,8 @@
 
     - name: Namespace + Argo App
       shell: |
-        kubectl apply -f ~/Diplom_infrastructure/k8s-manifests/namespace.yaml
-        kubectl apply -f ~/Diplom_infrastructure/tmp/diplom-app.yaml -n argocd
+        microk8s kubectl apply -f ~/Diplom_infrastructure/k8s-manifests/namespace.yaml
+        microk8s kubectl apply -f ~/Diplom_infrastructure/tmp/diplom-app.yaml -n argocd
       environment:
         KUBECONFIG: /home/ubuntu/.kube/config
 
@@ -175,13 +175,13 @@
 
     - name: Update repos
       shell: microk8s helm3 repo update
-
-    - name: Install Loki/Promtail → srv
+    
+    - name: Enable ONLY Promtail 
       shell: |
-        microk8s helm3 upgrade --install loki grafana/loki \
+        microk8s helm3 upgrade --install promtail grafana/promtail \
           --namespace logging --create-namespace \
-          --set promtail.enabled=true \
-          --set "promtail.config.clients[0].url=http://{{ srv_monitoring_ip }}:3100/loki/api/v1/push"
+          --set "config.clients[0].url=http://{{ srv_monitoring_ip }}:3100/loki/api/v1/push"
+
 
 - name: Auto-config srv vars/main.yml
   hosts: k8s-master
@@ -190,35 +190,44 @@
     srv_monitoring_ip: "{{ hostvars['jenkins-node']['ansible_host'] }}"
   tasks:
     - name: Get K8s node IP
-      shell: kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'
+      shell: microk8s kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'
       register: k8s_node
       environment: 
         KUBECONFIG: /home/ubuntu/.kube/config
 
 
     - name: Get NodePort
-      shell: kubectl get svc diplom-app -o jsonpath='{.spec.ports[0].nodePort}'
+      shell: microk8s kubectl get svc diplom-app -o jsonpath='{.spec.ports[0].nodePort}' 2>/dev/null || echo "30080"
       register: node_port
       environment:          
         KUBECONFIG: /home/ubuntu/.kube/config
 
     - name: Get K8s API
-      shell: kubectl cluster-info | grep 'control plane' | awk '{print $NF}'
+      shell: microk8s kubectl cluster-info | grep 'control plane' | awk '{print $NF}'
       register: k8s_api
       environment:          
         KUBECONFIG: /home/ubuntu/.kube/config
 
+    - name: Create monitoring configs dir
+      file:
+        path: /opt/monitoring/configs
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      delegate_to: jenkins-node
 
-    - name: Update srv vars/main.yml (auto)
+
+    - name: Update srv vars/main.yml
       shell: |
-        cat > /opt/monitoring/configs/vars/main.yml << EOF
+        sudo install -D -m 644 /dev/stdin /opt/monitoring/configs/vars/main.yml << EOF
         app_target: "{{ k8s_node.stdout }}:{{ node_port.stdout }}"
         k8s_api: "{{ k8s_api.stdout }}"
-        telegram_bot_token: "8503785351:AAEeSuzGp3y7CMZt1rjFuUw4vDUMEM3F_RU" #add new
-        telegram_chat_id: "980315984" #add new
+        telegram_bot_token: "8503785351:AAEeSuzGp3y7CMZt1rjFuUw4vDUMEM3F_RU"
+        telegram_chat_id: "980315984"
         EOF
-      delegate_to: "{{ groups['jenkins-node'][0] }}"
+      delegate_to: jenkins-node
 
     - name: Restart prometheus
       shell: cd /opt/monitoring && docker-compose restart prometheus
-      delegate_to: "{{ groups['jenkins-node'][0] }}"
+      delegate_to: jenkins-node

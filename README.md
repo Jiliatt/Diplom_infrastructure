@@ -16,6 +16,8 @@ terraform apply -auto-approve
 ## 2. КОМАНДЫ ДЕПЛОЯ (копипаст)
 cd ansible (перед этим меняем хосты (айпи адреса) в ансибл-файле - eсли используешь нединамичный файл то да, если как ниже написано – ниче не меняешь)
 ansible-playbook -i inventory/dynamic-inventory.py playbook.yml
+Скопировать вывод id_ed25519.pub и добавить в GitHub → Settings → SSH and GPG keys → New SSH key → вставить
+ansible-playbook -i inventory/dynamic-inventory.py playbook.yml --start-at-task="Clone repo"
 ==============================================================================
 
 
@@ -24,17 +26,10 @@ ansible-playbook -i inventory/dynamic-inventory.py playbook.yml
 ssh ubuntu@IP-master-node 
 
 ####GitOps deploy: 
-0 ssh-keygen -t ed25519 -C "k8s-master"    # жмёшь Enter везде
-0 cat ~/.ssh/id_ed25519.pub  --> Скопировать вывод id_ed25519.pub и добавить в GitHub → Settings → SSH and GPG keys → New SSH key → вставить
-0 git clone -b feature/k8s-deploy git@github.com:Jiliatt/Diplom_infrastructure.git
-0 cd ~/Diplom_infrastructure
-0 git checkout feature/k8s-deploy
-0 microk8s kubectl apply -f k8s-manifests/namespace.yaml
-0 microk8s kubectl apply -f tmp/diplom-app.yaml -n argocd
-
-git push origin feature/k8s-deploy  #ArgoCD auto-detect → Sync → Deploy
 
 ####Kогда зашел на мастер-ноду и проверяешь все -- 
+git push origin feature/k8s-deploy  #ArgoCD auto-detect → Sync → Deploy
+
 !!TOP!! microk8s kubectl get applications -n argocd    # должно Healthy
 !!TOP!! microk8s kubectl get all -n diplom             # ArgoCD GitOps
 !!TOP!! microk8s kubectl get all -n diplom-app         # Jenkins CI/CD (Helm + тег)
@@ -54,7 +49,7 @@ git tag v1.0.1
 git push origin v1.0.1           #Jenkins auto-start 
 
 ####То есть четыре namespace: diplom & diplom-app & argocd & (ingress ->useless; diplom for argocd + diplom-app for jenkins (helm))
-####Доступ извне сто проц заработает джанго сервер: ssh -R 80:localhost:30080 serveo.net
+####Доступ извне сто проц заработает джанго сервер: ssh -R 80:localhost:31195 serveo.net
 ==============================================================================
 
 
@@ -83,20 +78,6 @@ service.yaml ✅
 1. GitOps  (ArgoCD + k8s-manifests): namespace "diplom" (:latest) (for use git push → ArgoCD)
 2. CI/CD (Jenkins + Helm): namespace "diplom-app" (:v1.0.1 + Postgres PVC) (for use git tag v1.0 → Jenkins or GitHub Actions (demo))
 3. GitHub Actions — cloud-native (file in app-directory .github/workflows/cicd.yml") (для этого use нужно почитать файл readme.md в директории приложения, там еще секреты добавить на гит-репо нужно)
-==============================================================================
-
-
-
-==============================================================================
-Aрхитектура:
-1 VM (мастер-нода) IP: 89.169.187.139
-    ↓ Ansible устанавливает:
-2 MicroK8s кластер (single-node = 1 нода = сама себя)
-    ↓ ArgoCD GitOps читает GitHub
-3 Deployment diplom-app (this name for type of Deployment in K8s, not for label of namespace) → **1 реплика** (1 Pod Django)
-    ↓ Service NodePort 30080
-4 Доступ: 158.160.95.216:30080 → 1 Django под
-Сколько реплик? 2 Pod (из deployment.yaml replicas: 2)
 ==============================================================================
 
 
