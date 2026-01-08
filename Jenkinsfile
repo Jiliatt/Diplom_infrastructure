@@ -4,7 +4,7 @@ pipeline {
         REGISTRY = 'edmon2106/diplom-django'
 	IMAGE_TAG = "${env.BUILD_NUMBER}"
         KUBE_MASTER = 'ubuntu@158.160.73.252' //zamena IP k8s-master
-	DOCKER_PASSWORD = 'Linck0ut_putt%27'
+	DOCKER_PASSWORD = 'primer' //zamena na password from edmon2106
     }
     triggers {  // ← ТРИГГЕР ПО ТЕГАМ
         pollSCM('H/1 * * * *')
